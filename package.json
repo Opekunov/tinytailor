@@ -35,7 +35,7 @@
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.12",
     "@types/mime-types": "^2.1.4",
-    "@types/node": "^20.11.17",
+    "@types/node": "^20.19.11",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
