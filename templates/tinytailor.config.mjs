@@ -1,4 +1,4 @@
-export default {
+const config = {
   // Project paths
   // projectRoot: process.cwd(), // Auto-detected
   // publicRoot: 'public', // Relative to project root
@@ -58,7 +58,7 @@ export default {
     pngRecompress: {
       enabled: true,
       sizeThresholdBytes: 8 * 1024 * 1024, // 8MB
-      minPixelsThreshold: 12000000, // ~3464x3464px
+      minPixelsThreshold: 12_000_000, // ~3464x3464px
       compressionLevel: 9,
       effort: 9,
       adaptiveFiltering: true,
@@ -169,12 +169,13 @@ export default {
   },
 };
 
-/*
-🎯 TinyTailor Configuration Guide (ES6 Module)
+export default config;
 
-This is the ES6 module version of the configuration file.
-Use this format if you're working with modern Node.js projects
-that use ES modules or TypeScript with module: "ESNext".
+/*
+🎯 TinyTailor Configuration Guide (ES Modules)
+
+This is the ES Modules version of the configuration file.
+Use this format for modern Node.js projects with ES modules support.
 
 MAIN FEATURES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -204,6 +205,12 @@ MAIN FEATURES:
    • Real-time console progress
    • Detailed markdown reports
    • Processing statistics and metrics
+
+✨ ES Modules Benefits:
+   • Modern JavaScript syntax
+   • Tree-shaking support
+   • Better static analysis
+   • Future-proof module system
 
 USAGE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

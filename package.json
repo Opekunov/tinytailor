@@ -7,7 +7,7 @@
     "tinytailor": "dist/cli/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run generate-templates && tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli/index.js",
     "test": "jest",
@@ -15,6 +15,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "typecheck": "tsc --noEmit",
+    "generate-templates": "node scripts/generate-templates.js",
     "prepare": "husky install",
     "pre-commit": "npm run lint && npm run typecheck && npm test && npm run build"
   },

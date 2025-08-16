@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   // Project paths
   // projectRoot: process.cwd(), // Auto-detected
   // publicRoot: 'public', // Relative to project root
@@ -58,7 +58,7 @@ module.exports = {
     pngRecompress: {
       enabled: true,
       sizeThresholdBytes: 8 * 1024 * 1024, // 8MB
-      minPixelsThreshold: 12000000, // ~3464x3464px
+      minPixelsThreshold: 12_000_000, // ~3464x3464px
       compressionLevel: 9,
       effort: 9,
       adaptiveFiltering: true,
@@ -169,8 +169,13 @@ module.exports = {
   },
 };
 
+module.exports = config;
+
 /*
-🎯 TinyTailor Configuration Guide
+🎯 TinyTailor Configuration Guide (JavaScript)
+
+This is the JavaScript version of the configuration file.
+Use this format for traditional Node.js projects with CommonJS modules.
 
 MAIN FEATURES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -200,6 +205,12 @@ MAIN FEATURES:
    • Real-time console progress
    • Detailed markdown reports
    • Processing statistics and metrics
+
+✨ JavaScript Benefits:
+   • Works in any Node.js environment
+   • No compilation step required
+   • Simple and straightforward syntax
+   • Compatible with older tooling
 
 USAGE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

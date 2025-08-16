@@ -52,3 +52,7 @@ logs/
 /example.mjs
 CLAUDE.md
 /.claude/
+
+# Generated config templates (auto-generated from .ts)
+/templates/tinytailor.config.js
+/templates/tinytailor.config.mjs
