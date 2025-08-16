@@ -100,8 +100,33 @@ export default {
         'два', 'три', 'пять', 'сто', 'год', 'лет', 'дня', 'час', 'раз', 'все', 'всех',
         'всем', 'кто', 'что', 'чем', 'чей', 'чья', 'чье', 'чьи', 'кого', 'кому', 'кем',
         
-        // Add English prepositions if needed
-        // 'a', 'an', 'the', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
+        // English prepositions (английские предлоги)
+        'a', 'an', 'the', 'in', 'on', 'at', 'by', 'for', 'of', 'to', 'from', 'with', 'without',
+        'under', 'over', 'above', 'below', 'into', 'onto', 'upon', 'within', 'beyond', 'across',
+        'through', 'throughout', 'around', 'about', 'near', 'beside', 'between', 'among', 'amid',
+        'against', 'toward', 'towards', 'before', 'after', 'during', 'since', 'until', 'till',
+        'despite', 'except', 'beside', 'besides', 'along', 'beneath', 'inside', 'outside',
+        'regarding', 'concerning', 'considering', 'including', 'excluding', 'following',
+        'according', 'depending', 'owing', 'due', 'prior', 'subsequent', 'pursuant', 'via',
+        
+        // English conjunctions (английские союзы)  
+        'and', 'or', 'but', 'nor', 'yet', 'so', 'as', 'if', 'when', 'where', 'why', 'how',
+        'that', 'what', 'who', 'whom', 'whose', 'which', 'while', 'since', 'until', 'unless',
+        'though', 'although', 'because', 'whereas', 'wherever', 'whenever', 'however',
+        'therefore', 'moreover', 'furthermore', 'nevertheless', 'nonetheless', 'otherwise',
+        
+        // English articles and determiners (английские артикли и определители)
+        'this', 'that', 'these', 'those', 'some', 'any', 'all', 'each', 'every', 'both',
+        'either', 'neither', 'such', 'much', 'many', 'few', 'little', 'more', 'most',
+        'less', 'least', 'no', 'none', 'one', 'two', 'ten', 'one\'s', 'my', 'our', 'your',
+        'his', 'her', 'its', 'their',
+        
+        // English short words and pronouns (английские короткие слова и местоимения)
+        'I', 'me', 'we', 'us', 'you', 'he', 'him', 'she', 'her', 'it', 'they', 'them',
+        'am', 'is', 'are', 'was', 'were', 'be', 'been', 'has', 'have', 'had', 'do', 'did',
+        'will', 'would', 'can', 'could', 'may', 'might', 'must', 'shall', 'should',
+        'up', 'out', 'off', 'down', 'away', 'back', 'here', 'there', 'now', 'then',
+        'yes', 'no', 'not', 'too', 'very', 'so', 'just', 'only', 'also', 'even', 'still'
       ],
     },
     
