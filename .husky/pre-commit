@@ -1,0 +1,11 @@
+# Run linting
+npm run lint
+
+# Run type checking
+npm run typecheck
+
+# Run tests
+npm test
+
+# Build the project
+npm run build

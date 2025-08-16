@@ -1,0 +1,59 @@
+@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.png')
+}@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.jpg')
+}@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.jpg')
+}@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.png')
+}@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/banner.png')
+}@supports (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.webp')
+}
+
+/* Fallback for browsers that don't support WebP */
+@supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
+  background-image: url('images/hero-bg.jpg')
+}.hero {
+    background-image: url('images/hero-bg.jpg');
+    background-size: cover;
+    height: 400px;
+    width: 100%;
+}
+
+.gallery img {
+    max-width: 100%;
+    height: auto;
+}
+
+.banner {
+    background-image: url('images/banner.png');
+    background-repeat: no-repeat;
+    background-position: center;
+}

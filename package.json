@@ -1,0 +1,61 @@
+{
+  "name": "tinytailor",
+  "version": "1.0.0",
+  "description": "A powerful tool for optimizing images and fixing text in HTML, Blade, and Vue files",
+  "main": "dist/index.js",
+  "bin": {
+    "tinytailor": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install",
+    "pre-commit": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "keywords": [
+    "image-optimization",
+    "webp",
+    "html",
+    "vue", 
+    "blade",
+    "text-processing",
+    "cli",
+    "build-tool"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/jest": "^29.5.12",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.11.17",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "husky": "^9.0.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0-rc.12",
+    "commander": "^12.0.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "mime-types": "^2.1.35",
+    "ora": "^5.4.1",
+    "sharp": "^0.33.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

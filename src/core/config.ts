@@ -1,0 +1,230 @@
+import * as path from 'path';
+import * as fs from 'fs-extra';
+import { TinyTailorConfig } from '../types';
+
+const DEFAULT_CONFIG: TinyTailorConfig = {
+  projectRoot: process.cwd(),
+  publicRoot: path.join(process.cwd(), 'public'),
+  
+  scanGlobs: [
+    '**/*.blade.php',
+    '**/*.html',
+    '**/*.vue',
+    '!vendor/**',
+    '!node_modules/**',
+    '!storage/**',
+    '!bootstrap/cache/**',
+    '!resources/views/vendor/**',
+    '!resources/views/emails/**',
+    '!storage/framework/views/**',
+  ],
+  
+  excludePaths: [],
+  excludeFiles: [],
+  
+  imageOptimization: {
+    enabled: true,
+    excludedExtensions: ['.webp'],
+    wrapLooseImg: false,
+    mobileWidth1x: 640,
+    retinaMultiplier: 2,
+    onlyDownscaleIfWiderThan: 800,
+    mobileMedia: '(max-width: 640px)',
+    jpgQuality: 78,
+    webpQuality: 80,
+    rasterExts: ['.jpg', '.jpeg', '.png', '.webp'],
+    markerAttr: 'data-optimized',
+    pngRecompress: {
+      enabled: true,
+      sizeThresholdBytes: 8 * 1024 * 1024, // 8 MB
+      minPixelsThreshold: 12_000_000, // ~3464×3464
+      compressionLevel: 9,
+      effort: 9,
+      adaptiveFiltering: true,
+      log: true,
+    },
+  },
+  
+  textProcessing: {
+    hangingPrepositions: {
+      enabled: true,
+      fileExtensions: ['.html', '.blade.php', '.vue'],
+      prepositions: [
+        'а', 'и', 'в', 'во', 'не', 'что', 'он', 'на', 'я', 'с', 'со',
+        'как', 'к', 'по', 'из', 'у', 'за', 'от', 'о', 'об', 'для',
+        'до', 'при', 'без', 'под', 'над', 'через', 'про', 'между'
+      ],
+    },
+    superscriptReplacements: {
+      enabled: true,
+      replacements: [
+        { from: 'м2', to: 'м<sup>2</sup>' },
+        { from: 'м3', to: 'м<sup>3</sup>' },
+        { from: 'км2', to: 'км<sup>2</sup>' },
+        { from: 'км3', to: 'км<sup>3</sup>' },
+        { from: 'см2', to: 'см<sup>2</sup>' },
+        { from: 'см3', to: 'см<sup>3</sup>' },
+        { from: 'мм2', to: 'мм<sup>2</sup>' },
+        { from: 'мм3', to: 'мм<sup>3</sup>' },
+      ],
+    },
+  },
+  
+  sizeChecking: {
+    enabled: false,
+    threshold: 50, // 50% bigger than needed
+  },
+
+  cssOptimization: {
+    enabled: true,
+    webpEnabled: true,
+    fileExtensions: ['.css', '.scss', '.sass'],
+  },
+  
+  logging: {
+    console: true,
+    markdownReport: true,
+    reportDir: 'tinytailor_reports',
+  },
+};
+
+export class ConfigManager {
+  private config: TinyTailorConfig;
+  private configPath: string;
+
+  constructor(projectRoot?: string) {
+    const root = projectRoot || process.cwd();
+    this.configPath = path.join(root, 'tinytailor.config.js');
+    this.config = {
+      ...DEFAULT_CONFIG,
+      projectRoot: root,
+      publicRoot: path.join(root, 'public'),
+    };
+  }
+
+  async loadConfig(): Promise<TinyTailorConfig> {
+    try {
+      if (await fs.pathExists(this.configPath)) {
+        let userConfig: unknown;
+        
+        try {
+          // Try require first - most compatible for CommonJS
+          const configPath = path.resolve(this.configPath);
+          delete require.cache[configPath];
+          userConfig = require(configPath);
+        } catch (requireError: unknown) {
+          // If require fails, try to load as JS file by reading and evaluating
+          try {
+            const configContent = await fs.readFile(this.configPath, 'utf8');
+            
+            // Create a safe evaluation context for CommonJS
+            const sandbox = {
+              module: { exports: {} },
+              exports: {},
+              require: require,
+              __dirname: path.dirname(this.configPath),
+              __filename: this.configPath,
+              console: console,
+              Buffer: Buffer,
+              process: process,
+              global: global,
+            };
+            
+            // Make exports reference the same object as module.exports
+            sandbox.exports = (sandbox.module as any).exports;
+            
+            const vm = require('vm');
+            const context = vm.createContext(sandbox);
+            vm.runInContext(configContent, context, {
+              filename: this.configPath,
+              timeout: 5000,
+            });
+            
+            userConfig = (sandbox.module as any).exports;
+            
+            if (!userConfig || typeof userConfig !== 'object') {
+              throw new Error('Config file did not export a valid configuration object');
+            }
+          } catch (vmError: unknown) {
+            const requireMsg = requireError instanceof Error ? requireError.message : String(requireError);
+            const vmMsg = vmError instanceof Error ? vmError.message : String(vmError);
+            throw new Error(`Failed to load config - require error: ${requireMsg}, vm error: ${vmMsg}`);
+          }
+        }
+        
+        // Deep merge user config with defaults
+        this.config = this.mergeConfigs(DEFAULT_CONFIG as any, userConfig as any);
+        this.config.projectRoot = path.dirname(this.configPath);
+        
+        // Update publicRoot if not explicitly set
+        if (!(userConfig as any).publicRoot) {
+          this.config.publicRoot = path.join(this.config.projectRoot, 'public');
+        }
+      }
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`Warning: Could not load config from ${this.configPath}:`, errorMsg);
+      console.warn('Using default configuration.');
+    }
+
+    return this.config;
+  }
+
+  getConfig(): TinyTailorConfig {
+    return this.config;
+  }
+
+  getDefaultConfig(): TinyTailorConfig {
+    return { ...DEFAULT_CONFIG };
+  }
+
+  private mergeConfigs(defaultConfig: any, userConfig: any): TinyTailorConfig {
+    const result = { ...defaultConfig };
+    
+    for (const key in userConfig) {
+      if (userConfig[key] !== null && typeof userConfig[key] === 'object' && !Array.isArray(userConfig[key])) {
+        result[key] = this.mergeConfigs(
+          (defaultConfig[key] as any) || {},
+          userConfig[key] as any
+        );
+      } else {
+        result[key] = userConfig[key];
+      }
+    }
+    
+    return result as TinyTailorConfig;
+  }
+
+  async validateConfig(): Promise<{ valid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+    
+    // Check if project root exists
+    if (!await fs.pathExists(this.config.projectRoot)) {
+      errors.push(`Project root does not exist: ${this.config.projectRoot}`);
+    }
+    
+    // Check if public root exists (optional) - only warn in non-test environments
+    if (this.config.publicRoot && !await fs.pathExists(this.config.publicRoot) && !process.env.NODE_ENV?.includes('test')) {
+      console.warn(`Warning: Public root does not exist: ${this.config.publicRoot}`);
+    }
+    
+    // Validate image quality settings
+    if (this.config.imageOptimization.jpgQuality < 1 || this.config.imageOptimization.jpgQuality > 100) {
+      errors.push('JPG quality must be between 1 and 100');
+    }
+    
+    if (this.config.imageOptimization.webpQuality < 1 || this.config.imageOptimization.webpQuality > 100) {
+      errors.push('WebP quality must be between 1 and 100');
+    }
+
+    // Validate CSS optimization settings
+    if (this.config.cssOptimization.fileExtensions.length === 0) {
+      errors.push('CSS optimization file extensions cannot be empty');
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+}

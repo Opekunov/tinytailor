@@ -1,0 +1,14 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "description": "Test project for TinyTailor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "tinytailor": "file:../../"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Opekunov"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Only update security vulnerabilities and minor versions
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
