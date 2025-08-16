@@ -35,6 +35,15 @@ describe('CssWebPProcessor', () => {
       logImageProcessing: jest.fn(),
       logTextProcessing: jest.fn(),
       logCssProcessing: jest.fn(),
+      
+      // New animated logging methods
+      startGlobalSpinner: jest.fn(),
+      updateGlobalSpinner: jest.fn(),
+      stopGlobalSpinner: jest.fn(),
+      startFileProcessing: jest.fn(),
+      endFileProcessing: jest.fn(),
+      logFileChange: jest.fn(),
+      logTreeNode: jest.fn(),
     };
 
     processor = new CssWebPProcessor(config, mockLogger);

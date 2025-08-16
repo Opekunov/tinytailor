@@ -147,6 +147,15 @@ export interface Logger {
   logImageProcessing(filePath: string, action: string, sizeBefore: number, sizeAfter: number): void;
   logTextProcessing(filePath: string, replacements: number, type: string): void;
   logCssProcessing(filePath: string, backgroundImages: number, webpRules: number): void;
+  
+  // New animated logging methods
+  startGlobalSpinner(message: string): void;
+  updateGlobalSpinner(message: string): void;
+  stopGlobalSpinner(message?: string): void;
+  startFileProcessing(filePath: string): void;
+  endFileProcessing(filePath: string, changes?: string[]): void;
+  logFileChange(filePath: string, lineNumbers: number[], description: string): void;
+  logTreeNode(level: number, isLast: boolean, content: string, type?: 'file' | 'change' | 'info'): void;
 }
 
 // VM sandbox types for dynamic config loading

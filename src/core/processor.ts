@@ -49,16 +49,21 @@ export class TinyTailorProcessor {
     };
 
     try {
+      // Start global spinner
+      this.logger.startGlobalSpinner('Scanning files...');
+      
       // Scan files
       const files = await this.scanFiles();
       result.totalFiles = files.length;
       
-      this.logger.info(`Found ${files.length} files to process`);
+      this.logger.updateGlobalSpinner(`Processing ${files.length} files...`);
 
       // Process each file
       for (const file of files) {
+        this.logger.startFileProcessing(file);
         try {
           let fileChanged = false;
+          const changes: string[] = [];
 
           // Image optimization
           if (selectedModules.includes('image-optimization') && this.config.imageOptimization.enabled) {
@@ -66,6 +71,7 @@ export class TinyTailorProcessor {
             if (imageResult.changed) {
               fileChanged = true;
               result.images.processed++;
+              changes.push('Image optimization applied');
             }
           }
 
@@ -77,6 +83,13 @@ export class TinyTailorProcessor {
             }
             result.text.hangingPrepositionsFixed += textResult.hangingPrepositionsFixed;
             result.text.superscriptReplacements += textResult.superscriptReplacements;
+            
+            if (textResult.hangingPrepositionsFixed > 0) {
+              changes.push(`Fixed ${textResult.hangingPrepositionsFixed} hanging prepositions`);
+            }
+            if (textResult.superscriptReplacements > 0) {
+              changes.push(`Applied ${textResult.superscriptReplacements} superscript replacements`);
+            }
           }
 
           // CSS optimization
@@ -85,6 +98,7 @@ export class TinyTailorProcessor {
             if (cssResult.changed) {
               fileChanged = true;
               result.css.processed++;
+              changes.push(`CSS WebP optimization: ${cssResult.backgroundImagesProcessed} backgrounds, ${cssResult.webpRulesAdded} WebP rules`);
             }
             result.css.backgroundImagesProcessed += cssResult.backgroundImagesProcessed;
             result.css.webpRulesAdded += cssResult.webpRulesAdded;
@@ -92,8 +106,10 @@ export class TinyTailorProcessor {
 
           if (fileChanged) {
             result.changedFiles++;
-            this.logger.success(`Updated: ${this.getRelativePath(file)}`);
           }
+          
+          // End file processing with changes list
+          this.logger.endFileProcessing(file, fileChanged ? changes : undefined);
 
         } catch (error: unknown) {
           const processingError: ProcessingError = {
@@ -102,7 +118,7 @@ export class TinyTailorProcessor {
             stack: error instanceof Error ? error.stack : undefined,
           };
           result.errors.push(processingError);
-          this.logger.error(`Error processing ${this.getRelativePath(file)}: ${error instanceof Error ? error.message : String(error)}`);
+          this.logger.endFileProcessing(file, [`Error: ${error instanceof Error ? error.message : String(error)}`]);
         }
       }
 
@@ -120,7 +136,9 @@ export class TinyTailorProcessor {
       }
 
       const duration = (Date.now() - startTime) / 1000;
-      this.logger.endOperation(`Processing completed in ${duration.toFixed(2)}s`);
+      
+      // Stop global spinner and show completion
+      this.logger.stopGlobalSpinner(`Processing completed in ${duration.toFixed(2)}s`);
 
       // Generate summary
       this.generateSummary(result);
@@ -128,6 +146,9 @@ export class TinyTailorProcessor {
       return result;
 
     } catch (error: unknown) {
+      // Stop spinner in case of fatal error
+      this.logger.stopGlobalSpinner();
+      
       result.errors.push({
         file: 'processor',
         message: `Fatal error during processing: ${error instanceof Error ? error.message : String(error)}`,
