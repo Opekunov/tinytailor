@@ -14,7 +14,7 @@ export class SharpProcessor {
         format: metadata.format || '',
         size: stats.size,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         width: 0,
         height: 0,
@@ -67,8 +67,9 @@ export class SharpProcessor {
       }
 
       return { compressed: false, originalSize: stats.size, newSize: stats.size };
-    } catch (error: any) {
-      throw new Error(`PNG recompression failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new Error(`PNG recompression failed: ${errorMsg}`);
     }
   }
 

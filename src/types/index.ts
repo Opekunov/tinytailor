@@ -148,3 +148,30 @@ export interface Logger {
   logTextProcessing(filePath: string, replacements: number, type: string): void;
   logCssProcessing(filePath: string, backgroundImages: number, webpRules: number): void;
 }
+
+// VM sandbox types for dynamic config loading
+export interface VMSandbox {
+  module: { exports: Record<string, unknown> };
+  exports: Record<string, unknown>;
+  require: typeof require;
+  __dirname: string;
+  __filename: string;
+  console: typeof console;
+  Buffer: typeof Buffer;
+  process: typeof process;
+  global: typeof global;
+}
+
+// Type for user config that can be partial
+export type PartialTinyTailorConfig = Partial<TinyTailorConfig> & {
+  textProcessing?: Partial<TinyTailorConfig['textProcessing']> & {
+    hangingPrepositions?: Partial<TinyTailorConfig['textProcessing']['hangingPrepositions']>;
+    superscriptReplacements?: Partial<TinyTailorConfig['textProcessing']['superscriptReplacements']>;
+  };
+  imageOptimization?: Partial<TinyTailorConfig['imageOptimization']> & {
+    pngRecompress?: Partial<TinyTailorConfig['imageOptimization']['pngRecompress']>;
+  };
+  sizeChecking?: Partial<TinyTailorConfig['sizeChecking']>;
+  cssOptimization?: Partial<TinyTailorConfig['cssOptimization']>;
+  logging?: Partial<TinyTailorConfig['logging']>;
+};

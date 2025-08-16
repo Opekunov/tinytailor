@@ -34,8 +34,9 @@ export async function initCommand(): Promise<void> {
   try {
     await fs.copy(templatePath, configPath);
     console.log(chalk.green('✓'), `Created ${chalk.cyan('tinytailor.config.js')}`);
-  } catch (error: any) {
-    console.log(chalk.red('✗'), `Failed to create config file: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.log(chalk.red('✗'), `Failed to create config file: ${errorMsg}`);
     return;
   }
   
@@ -43,8 +44,9 @@ export async function initCommand(): Promise<void> {
   try {
     await fs.ensureDir(reportsDir);
     console.log(chalk.green('✓'), `Created ${chalk.cyan('tinytailor_reports/')} directory`);
-  } catch (error: any) {
-    console.log(chalk.red('✗'), `Failed to create reports directory: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.log(chalk.red('✗'), `Failed to create reports directory: ${errorMsg}`);
   }
   
   // Ask about .gitignore
@@ -75,8 +77,9 @@ export async function initCommand(): Promise<void> {
       } else {
         console.log(chalk.blue('ℹ'), `${chalk.cyan('tinytailor_reports/')} already in .gitignore`);
       }
-    } catch (error: any) {
-      console.log(chalk.red('✗'), `Failed to update .gitignore: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.log(chalk.red('✗'), `Failed to update .gitignore: ${errorMsg}`);
     }
   }
   

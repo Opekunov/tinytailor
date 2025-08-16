@@ -46,10 +46,11 @@ export class SizeChecker {
             }
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
         warnings.push({
           file: file,
-          message: `Could not analyze file for size checking: ${error.message}`,
+          message: `Could not analyze file for size checking: ${errorMsg}`,
           suggestion: 'Check file permissions and encoding'
         });
       }
@@ -58,7 +59,7 @@ export class SizeChecker {
     return warnings;
   }
 
-  async analyzeSingleImage(imagePath: string, displayClasses: string[]): Promise<ProcessingWarning | null> {
+  async analyzeSingleImage(imagePath: string): Promise<ProcessingWarning | null> {
     // Placeholder for single image analysis
     // This would compare the actual image size with CSS-defined display sizes
     
@@ -78,10 +79,11 @@ export class SizeChecker {
       // 3. Compare and generate warning if oversized
 
       return null;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       return {
         file: imagePath,
-        message: `Size analysis failed: ${error.message}`,
+        message: `Size analysis failed: ${errorMsg}`,
       };
     }
   }

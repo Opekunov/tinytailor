@@ -56,13 +56,15 @@ export class CssOptimizer {
 
       return result;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       result.errors.push({
         file: FileUtils.relativePath(this.config.projectRoot, filePath),
-        message: `CSS processing failed: ${error.message}`,
-        stack: error.stack,
+        message: `CSS processing failed: ${errorMsg}`,
+        stack: errorStack,
       });
-      this.logger.error(`Failed to process CSS file ${filePath}: ${error.message}`);
+      this.logger.error(`Failed to process CSS file ${filePath}: ${errorMsg}`);
       return result;
     }
   }

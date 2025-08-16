@@ -92,16 +92,20 @@ export async function runCommand(options: {
         process.exit(1);
       }
 
-    } catch (error: any) {
-      logger.error(`Processing failed: ${error.message}`);
-      console.error(chalk.red(`\nStack trace:\n${error.stack}`));
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
+      logger.error(`Processing failed: ${errorMsg}`);
+      console.error(chalk.red(`\nStack trace:\n${errorStack}`));
       process.exit(1);
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace available';
     console.log(chalk.red.bold('\n❌ Initialization failed:\n'));
-    console.log(chalk.red(error.message));
-    console.error(chalk.red(`\nStack trace:\n${error.stack}`));
+    console.log(chalk.red(errorMsg));
+    console.error(chalk.red(`\nStack trace:\n${errorStack}`));
     process.exit(1);
   }
 }

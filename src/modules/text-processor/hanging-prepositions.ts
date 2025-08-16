@@ -52,7 +52,7 @@ export class HangingPrepositionsProcessor {
     
     const processedParts = parts.map(part => {
       if (part.type === 'text') {
-        return part.content.replace(pattern, (match, prefix) => {
+        return part.content.replace(pattern, (match, _prefix) => {
           replacements++;
           // Replace the trailing space with &nbsp; while keeping prefix
           return match.replace(/\s+$/, '&nbsp;');

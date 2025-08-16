@@ -125,8 +125,9 @@ export class CssWebPProcessor {
       const result = await this.sharpProcessor.convertToWebp(imagePath, webpPath, quality);
 
       return result.created ? webpPath : null;
-    } catch (error: any) {
-      this.logger.warn(`Failed to generate WebP for ${imagePath}: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to generate WebP for ${imagePath}: ${errorMsg}`);
       return null;
     }
   }
@@ -150,8 +151,9 @@ export class CssWebPProcessor {
 @supports not (background-image: url('data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==')) {
   ${originalRule}
 }`;
-    } catch (error: any) {
-      this.logger.warn(`Failed to create WebP rule: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to create WebP rule: ${errorMsg}`);
       return null;
     }
   }
@@ -231,8 +233,9 @@ export class CssWebPProcessor {
 
       return { fullRule, selector };
 
-    } catch (error: any) {
-      this.logger.debug(`Failed to find rule context: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.debug(`Failed to find rule context: ${errorMsg}`);
       return null;
     }
   }

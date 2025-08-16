@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import { TinyTailorConfig } from '../types';
+import { TinyTailorConfig, VMSandbox, PartialTinyTailorConfig } from '../types';
 
 const DEFAULT_CONFIG: TinyTailorConfig = {
   projectRoot: process.cwd(),
@@ -181,7 +181,7 @@ export class ConfigManager {
                 .replace(/export\s*\{\s*([^}]+)\s+as\s+default\s*\}/, 'module.exports = $1');
               
               // Create a safe evaluation context
-              const sandbox = {
+              const sandbox: VMSandbox = {
                 module: { exports: {} },
                 exports: {},
                 require: require,
@@ -193,7 +193,7 @@ export class ConfigManager {
                 global: global,
               };
               
-              sandbox.exports = (sandbox.module as any).exports;
+              sandbox.exports = sandbox.module.exports;
               
               const vm = require('vm');
               const context = vm.createContext(sandbox);
@@ -202,10 +202,10 @@ export class ConfigManager {
                 timeout: 5000,
               });
               
-              userConfig = (sandbox.module as any).exports;
+              userConfig = sandbox.module.exports as unknown;
             } else {
               // Handle CommonJS module.exports
-              const sandbox = {
+              const sandbox: VMSandbox = {
                 module: { exports: {} },
                 exports: {},
                 require: require,
@@ -217,7 +217,7 @@ export class ConfigManager {
                 global: global,
               };
               
-              sandbox.exports = (sandbox.module as any).exports;
+              sandbox.exports = sandbox.module.exports;
               
               const vm = require('vm');
               const context = vm.createContext(sandbox);
@@ -226,7 +226,7 @@ export class ConfigManager {
                 timeout: 5000,
               });
               
-              userConfig = (sandbox.module as any).exports;
+              userConfig = sandbox.module.exports as unknown;
             }
             
             if (!userConfig || typeof userConfig !== 'object') {
@@ -240,11 +240,12 @@ export class ConfigManager {
         }
         
         // Deep merge user config with defaults
-        this.config = this.mergeConfigs(DEFAULT_CONFIG as any, userConfig as any);
+        const userConfigTyped = userConfig as PartialTinyTailorConfig;
+        this.config = this.mergeConfigs(DEFAULT_CONFIG, userConfigTyped);
         this.config.projectRoot = path.dirname(this.configPath);
         
         // Update publicRoot if not explicitly set
-        if (!(userConfig as any).publicRoot) {
+        if (!userConfigTyped.publicRoot) {
           this.config.publicRoot = path.join(this.config.projectRoot, 'public');
         }
       }
@@ -265,21 +266,26 @@ export class ConfigManager {
     return { ...DEFAULT_CONFIG };
   }
 
-  private mergeConfigs(defaultConfig: any, userConfig: any): TinyTailorConfig {
+  private mergeConfigs(defaultConfig: TinyTailorConfig, userConfig: PartialTinyTailorConfig): TinyTailorConfig {
     const result = { ...defaultConfig };
     
     for (const key in userConfig) {
-      if (userConfig[key] !== null && typeof userConfig[key] === 'object' && !Array.isArray(userConfig[key])) {
-        result[key] = this.mergeConfigs(
-          (defaultConfig[key] as any) || {},
-          userConfig[key] as any
-        );
-      } else {
-        result[key] = userConfig[key];
+      const userValue = userConfig[key as keyof PartialTinyTailorConfig];
+      const defaultValue = defaultConfig[key as keyof TinyTailorConfig];
+      
+      if (userValue !== null && typeof userValue === 'object' && !Array.isArray(userValue) && defaultValue && typeof defaultValue === 'object') {
+        // For nested objects, recursively merge
+        (result as Record<string, unknown>)[key] = {
+          ...(defaultValue as Record<string, unknown>),
+          ...(userValue as Record<string, unknown>)
+        };
+      } else if (userValue !== undefined) {
+        // For primitive values or arrays, use user value
+        (result as Record<string, unknown>)[key] = userValue as unknown;
       }
     }
     
-    return result as TinyTailorConfig;
+    return result;
   }
 
   async validateConfig(): Promise<{ valid: boolean; errors: string[] }> {

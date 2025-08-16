@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import * as path from 'path';
 import * as mime from 'mime-types';
-import { TinyTailorConfig, ProcessingResult, Logger } from '../../types';
+import { TinyTailorConfig, Logger, ImageDerivatives } from '../../types';
 import { FileUtils } from '../../utils/file-utils';
 import { PathResolver } from '../../utils/path-resolver';
 import { SharpProcessor } from './sharp-processor';
@@ -123,8 +123,9 @@ export class ImageOptimizer {
         if (result.compressed && this.config.imageOptimization.pngRecompress.log) {
           this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
         }
-      } catch (error: any) {
-        this.logger.warn(`PNG recompress failed for ${path.relative(this.config.projectRoot, imgAbs)}: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`PNG recompress failed for ${path.relative(this.config.projectRoot, imgAbs)}: ${errorMsg}`);
       }
     }
 
@@ -210,10 +211,10 @@ export class ImageOptimizer {
 
   private buildSourceElements(
     fileAbs: string,
-    derivatives: any,
+    derivatives: ImageDerivatives,
     needDownscale: boolean,
     $: cheerio.CheerioAPI,
-    $root: cheerio.Cheerio<any>,
+    $root: cheerio.Cheerio<any>, // eslint-disable-line @typescript-eslint/no-explicit-any
     usesAsset: boolean = false
   ): string[] {
     const sources = [];
@@ -245,7 +246,7 @@ export class ImageOptimizer {
     return sources;
   }
 
-  private hasSourceCheerio($: cheerio.CheerioAPI, $pic: cheerio.Cheerio<any>, predicate: (s: any) => boolean): boolean {
+  private hasSourceCheerio($: cheerio.CheerioAPI, $pic: cheerio.Cheerio<any>, predicate: (s: { type: string; srcset: string; media: string; marker: boolean }) => boolean): boolean { // eslint-disable-line @typescript-eslint/no-explicit-any
     let found = false;
     $pic.find('source').each((_, el) => {
       const $el = $(el);

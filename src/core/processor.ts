@@ -127,11 +127,11 @@ export class TinyTailorProcessor {
 
       return result;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       result.errors.push({
         file: 'processor',
-        message: `Fatal error during processing: ${error.message}`,
-        stack: error.stack,
+        message: `Fatal error during processing: ${error instanceof Error ? error.message : String(error)}`,
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
@@ -166,8 +166,8 @@ export class TinyTailorProcessor {
       this.logger.info(`Filtered ${files.length} to ${filteredFiles.length} files after exclusions`);
       return filteredFiles;
 
-    } catch (error: any) {
-      this.logger.error(`File scanning failed: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`File scanning failed: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -227,10 +227,10 @@ export class TinyTailorProcessor {
           result.changedFiles++;
           result.images.processed++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         result.errors.push({
           file: this.getRelativePath(file),
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -257,10 +257,10 @@ export class TinyTailorProcessor {
         }
         result.text.hangingPrepositionsFixed += textResult.hangingPrepositionsFixed;
         result.text.superscriptReplacements += textResult.superscriptReplacements;
-      } catch (error: any) {
+      } catch (error: unknown) {
         result.errors.push({
           file: this.getRelativePath(file),
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -282,10 +282,10 @@ export class TinyTailorProcessor {
     try {
       const warnings = await this.sizeChecker.checkImageSizes(files);
       result.warnings = warnings;
-    } catch (error: any) {
+    } catch (error: unknown) {
       result.errors.push({
         file: 'size-checker',
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       });
     }
 
