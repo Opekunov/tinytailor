@@ -60,7 +60,7 @@ describe('InteractiveMenu', () => {
               checked: false,
             },
             {
-              name: '🔢 Convert units to superscript (м2 → м<sup>2</sup>)',
+              name: '🔢 Convert units to superscript (m² → m<sup>2</sup>)',
               value: 'text-processing-superscript',
               checked: false,
             },

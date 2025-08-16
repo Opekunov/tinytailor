@@ -2,8 +2,8 @@ name: Security Audit
 
 on:
   schedule:
-    # Run weekly on Mondays at 9:00 AM UTC
-    - cron: '0 9 * * 1'
+    # Run monthly on the 1st day at 9:00 AM UTC
+    - cron: '0 9 1 * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
           const body = `
           ## 🚨 Security Vulnerabilities Detected
           
-          Our weekly security audit has detected vulnerabilities in the project dependencies.
+          Our monthly security audit has detected vulnerabilities in the project dependencies.
           
           **Number of vulnerabilities:** ${context.payload.steps?.audit?.outputs?.vulnerabilities || 'Unknown'}
           
@@ -57,8 +57,8 @@ jobs:
           npm audit fix
           \`\`\`
           
-          ### Automated Weekly Check
-          This issue was created automatically by our weekly security audit workflow.
+          ### Automated Monthly Check
+          This issue was created automatically by our monthly security audit workflow.
           
           ---
           *Last checked: ${new Date().toISOString()}*
