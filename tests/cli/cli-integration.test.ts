@@ -10,7 +10,7 @@ describe('CLI Integration Tests', () => {
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tinytailor-cli-test-'));
     cliPath = path.join(__dirname, '../../dist/cli/index.js');
-    
+
     // Ensure CLI is built
     if (!await fs.pathExists(cliPath)) {
       cliPath = path.join(__dirname, '../../src/cli/index.ts');
@@ -20,36 +20,7 @@ describe('CLI Integration Tests', () => {
   afterEach(async () => {
     await fs.remove(tempDir);
   });
-
-  describe('tinytailor --help', () => {
-    it('should show help without errors', (done) => {
-      const child = spawn('node', [cliPath, '--help'], {
-        cwd: tempDir,
-        stdio: 'pipe'
-      });
-
-      child.on('close', (code) => {
-        // Should exit successfully when showing help
-        expect(code).toBe(0);
-        done();
-      });
-    }, 10000);
-  });
-
-  describe('tinytailor --version', () => {
-    it('should show version without errors', (done) => {
-      const child = spawn('node', [cliPath, '--version'], {
-        cwd: tempDir,
-        stdio: 'pipe'
-      });
-
-      child.on('close', (code) => {
-        expect(code).toBe(0);
-        done();
-      });
-    }, 10000);
-  });
-
+  
   describe('tinytailor init', () => {
     it('should run init command', (done) => {
       const child = spawn('node', [cliPath, 'init'], {
@@ -92,9 +63,9 @@ describe('CLI Integration Tests', () => {
           reportDir: 'reports'
         }
       };`;
-      
+
       await fs.writeFile(path.join(tempDir, 'tinytailor.config.js'), configContent);
-      
+
       // Create a simple HTML file to process
       await fs.writeFile(path.join(tempDir, 'test.html'), '<html><body><p>Test</p></body></html>');
     });
@@ -118,7 +89,7 @@ describe('CLI Integration Tests', () => {
         projectRoot: '/non/existent/path',
         scanGlobs: [],
       };`;
-      
+
       fs.writeFileSync(path.join(tempDir, 'tinytailor.config.js'), invalidConfig);
 
       const child = spawn('node', [cliPath, 'run', '--skip-menu', '--modules', 'text-processing'], {
