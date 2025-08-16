@@ -111,36 +111,72 @@ export class ConfigManager {
           // Try require first - most compatible for CommonJS
           const configPath = path.resolve(this.configPath);
           delete require.cache[configPath];
-          userConfig = require(configPath);
+          const requiredConfig = require(configPath);
+          
+          // Handle both module.exports and export default
+          userConfig = requiredConfig.default || requiredConfig;
         } catch (requireError: unknown) {
           // If require fails, try to load as JS file by reading and evaluating
           try {
             const configContent = await fs.readFile(this.configPath, 'utf8');
             
-            // Create a safe evaluation context for CommonJS
-            const sandbox = {
-              module: { exports: {} },
-              exports: {},
-              require: require,
-              __dirname: path.dirname(this.configPath),
-              __filename: this.configPath,
-              console: console,
-              Buffer: Buffer,
-              process: process,
-              global: global,
-            };
+            // Check if it uses ES6 export syntax
+            const hasESExport = /export\s+default/.test(configContent);
             
-            // Make exports reference the same object as module.exports
-            sandbox.exports = (sandbox.module as any).exports;
-            
-            const vm = require('vm');
-            const context = vm.createContext(sandbox);
-            vm.runInContext(configContent, context, {
-              filename: this.configPath,
-              timeout: 5000,
-            });
-            
-            userConfig = (sandbox.module as any).exports;
+            if (hasESExport) {
+              // Handle ES6 export default syntax
+              const modifiedContent = configContent
+                .replace(/export\s+default\s+/, 'module.exports = ')
+                .replace(/export\s*\{\s*([^}]+)\s+as\s+default\s*\}/, 'module.exports = $1');
+              
+              // Create a safe evaluation context
+              const sandbox = {
+                module: { exports: {} },
+                exports: {},
+                require: require,
+                __dirname: path.dirname(this.configPath),
+                __filename: this.configPath,
+                console: console,
+                Buffer: Buffer,
+                process: process,
+                global: global,
+              };
+              
+              sandbox.exports = (sandbox.module as any).exports;
+              
+              const vm = require('vm');
+              const context = vm.createContext(sandbox);
+              vm.runInContext(modifiedContent, context, {
+                filename: this.configPath,
+                timeout: 5000,
+              });
+              
+              userConfig = (sandbox.module as any).exports;
+            } else {
+              // Handle CommonJS module.exports
+              const sandbox = {
+                module: { exports: {} },
+                exports: {},
+                require: require,
+                __dirname: path.dirname(this.configPath),
+                __filename: this.configPath,
+                console: console,
+                Buffer: Buffer,
+                process: process,
+                global: global,
+              };
+              
+              sandbox.exports = (sandbox.module as any).exports;
+              
+              const vm = require('vm');
+              const context = vm.createContext(sandbox);
+              vm.runInContext(configContent, context, {
+                filename: this.configPath,
+                timeout: 5000,
+              });
+              
+              userConfig = (sandbox.module as any).exports;
+            }
             
             if (!userConfig || typeof userConfig !== 'object') {
               throw new Error('Config file did not export a valid configuration object');
