@@ -26,6 +26,8 @@ export class TinyTailorLogger implements Logger {
   private fileSpinners = new Map<string, { interval: ReturnType<typeof setInterval>; frame: number }>();
   private isGlobalSpinnerActive = false;
   private lastLoggedLine = '';
+  private pendingTreeOutput: string[] = [];
+  private activeLinesCount = 0;
 
   constructor(enableConsole = true, enableMarkdown = true, reportDir = 'tinytailor_reports') {
     this.enableConsole = enableConsole;
@@ -233,9 +235,11 @@ export class TinyTailorLogger implements Logger {
     
     const relativePath = path.relative(process.cwd(), filePath);
     
-    // Move cursor up if global spinner is active to print above it
+    // If global spinner is active, create space for file processing line above it
     if (this.isGlobalSpinnerActive) {
-      process.stdout.write('\r\x1b[1A\x1b[K'); // Move up and clear
+      process.stdout.write('\r\x1b[K'); // Clear current spinner line
+      console.log(''); // Create new line for file processing
+      // Don't restore spinner yet - it will be restored in the interval
     }
     
     let frame = 0;
@@ -244,9 +248,11 @@ export class TinyTailorLogger implements Logger {
       const spinnerChar = FILE_SPINNER_FRAMES[frame];
       
       if (this.isGlobalSpinnerActive) {
-        process.stdout.write('\r\x1b[K'); // Clear current line
+        // Move up to the file line, clear it, and update
+        process.stdout.write('\r\x1b[1A\x1b[K');
         process.stdout.write(chalk.blue(spinnerChar) + ' ' + chalk.white(relativePath) + '\n');
-        // Restore global spinner line
+        // Update global spinner line
+        process.stdout.write('\r\x1b[K');
         const globalFrame = GLOBAL_SPINNER_FRAMES[this.globalSpinnerFrame];
         process.stdout.write(chalk.cyan(globalFrame) + ' ' + chalk.white(this.globalSpinnerMessage));
       } else {
@@ -268,24 +274,26 @@ export class TinyTailorLogger implements Logger {
       clearInterval(spinner.interval);
       this.fileSpinners.delete(filePath);
       
+      // Clear the file processing line
       if (this.isGlobalSpinnerActive) {
-        process.stdout.write('\r\x1b[1A\x1b[K'); // Move up and clear
+        process.stdout.write('\r\x1b[1A\x1b[K'); // Move up and clear file line
       } else {
         process.stdout.write('\r\x1b[K'); // Clear line
       }
       
       console.log(chalk.green('✓'), chalk.white(relativePath));
       
-      // Show changes in tree format
+      // Add changes to tree output (they will be accumulated if global spinner is active)
       if (changes && changes.length > 0) {
         changes.forEach((change, index) => {
           const isLast = index === changes.length - 1;
           this.logTreeNode(1, isLast, change, 'change');
         });
-      }
-      
-      // Restore global spinner if active
-      if (this.isGlobalSpinnerActive && this.globalSpinnerInterval) {
+        
+        // Flush all accumulated tree output now that file processing is complete
+        this.flushTreeOutput();
+      } else if (this.isGlobalSpinnerActive) {
+        // Restore global spinner if no changes to display
         const globalFrame = GLOBAL_SPINNER_FRAMES[this.globalSpinnerFrame];
         process.stdout.write(chalk.cyan(globalFrame) + ' ' + chalk.white(this.globalSpinnerMessage));
       }
@@ -334,15 +342,33 @@ export class TinyTailorLogger implements Logger {
         break;
     }
     
-    // Handle spinner interactions
+    const outputLine = chalk.gray(prefix) + coloredContent;
+    
+    // If global spinner is active, accumulate tree output to display after file processing
     if (this.isGlobalSpinnerActive) {
-      process.stdout.write('\r\x1b[1A\x1b[K'); // Move up and clear
-      console.log(chalk.gray(prefix) + coloredContent);
-      // Restore global spinner
-      const globalFrame = GLOBAL_SPINNER_FRAMES[this.globalSpinnerFrame];
-      process.stdout.write(chalk.cyan(globalFrame) + ' ' + chalk.white(this.globalSpinnerMessage));
+      this.pendingTreeOutput.push(outputLine);
     } else {
-      console.log(chalk.gray(prefix) + coloredContent);
+      console.log(outputLine);
+    }
+  }
+
+  // Helper method to flush accumulated tree output
+  private flushTreeOutput(): void {
+    if (this.pendingTreeOutput.length > 0) {
+      // Clear global spinner line first
+      if (this.isGlobalSpinnerActive) {
+        process.stdout.write('\r\x1b[K');
+      }
+      
+      // Output all accumulated tree lines
+      this.pendingTreeOutput.forEach(line => console.log(line));
+      this.pendingTreeOutput = [];
+      
+      // Restore global spinner if needed
+      if (this.isGlobalSpinnerActive) {
+        const globalFrame = GLOBAL_SPINNER_FRAMES[this.globalSpinnerFrame];
+        process.stdout.write(chalk.cyan(globalFrame) + ' ' + chalk.white(this.globalSpinnerMessage));
+      }
     }
   }
 }

@@ -353,28 +353,6 @@ tinytailor
 
 > **Note**: The ES Module format (`.mjs`) is recommended for modern TypeScript/ESM projects. The CommonJS format (`.js`) works well with traditional Node.js projects.
 
-## Real-World Use Cases
-
-### E-commerce Sites
-- Optimize product images for faster loading
-- Fix product description typography
-- Generate responsive images for mobile shopping
-
-### Marketing Websites  
-- Convert hero images and banners to WebP
-- Fix hanging prepositions in marketing copy
-- Optimize CSS background images
-
-### Content Management
-- Bulk process uploaded images
-- Standardize measurement unit formatting
-- Improve page load performance
-
-### Laravel/Vue Applications
-- Handle `asset()` helper paths correctly
-- Process Blade templates and Vue components
-- Integrate with existing build processes
-
 ## What TinyTailor Does
 
 ### Image Processing Flow
