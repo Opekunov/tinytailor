@@ -120,9 +120,6 @@ export class ImageOptimizer {
     // Determine the original src format (asset() or regular path)
     const usesAsset = rawSrc.includes('asset(');
 
-    // Create backup if we're going to modify the image
-    await FileUtils.backupFile(imgAbs);
-
     // PNG recompression first
     if (this.config.imageOptimization.pngRecompress.enabled) {
       try {
@@ -134,8 +131,13 @@ export class ImageOptimizer {
           adaptiveFiltering: this.config.imageOptimization.pngRecompress.adaptiveFiltering,
         });
 
-        if (result.compressed && this.config.imageOptimization.pngRecompress.log) {
-          this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
+        if (result.compressed) {
+          // Create backup only when PNG was actually recompressed
+          await FileUtils.backupFile(imgAbs);
+          
+          if (this.config.imageOptimization.pngRecompress.log) {
+            this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
+          }
         }
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -374,9 +376,6 @@ export class ImageOptimizer {
       return null;
     }
 
-    // Create backup if we're going to modify the image
-    await FileUtils.backupFile(imgAbs);
-
     // Determine the original src format (asset() or regular path)
     const usesAsset = rawSrc.includes('asset(');
 
@@ -391,8 +390,13 @@ export class ImageOptimizer {
           adaptiveFiltering: this.config.imageOptimization.pngRecompress.adaptiveFiltering,
         });
 
-        if (result.compressed && this.config.imageOptimization.pngRecompress.log) {
-          this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
+        if (result.compressed) {
+          // Create backup only when PNG was actually recompressed
+          await FileUtils.backupFile(imgAbs);
+          
+          if (this.config.imageOptimization.pngRecompress.log) {
+            this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
+          }
         }
       } catch (error: unknown) {
         const errorMsg = error instanceof Error ? error.message : String(error);
