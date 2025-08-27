@@ -142,7 +142,7 @@ const DEFAULT_CONFIG: TinyTailorConfig = {
 
 export class ConfigManager {
   private config: TinyTailorConfig;
-  private configPath: string;
+  private configPath: string = '';
 
   constructor(configPath?: string) {
     if (configPath) {
@@ -157,7 +157,28 @@ export class ConfigManager {
     } else {
       // Otherwise, look for default config in current directory
       const root = process.cwd();
-      this.configPath = path.join(root, 'tinytailor.config.js');
+      
+      // Try multiple config file extensions in order of preference
+      const configFilenames = [
+        'tinytailor.config.mjs',
+        'tinytailor.config.js', 
+        'tinytailor.config.ts'
+      ];
+      
+      let foundConfig = false;
+      for (const filename of configFilenames) {
+        const testPath = path.join(root, filename);
+        if (fsSync.existsSync(testPath)) {
+          this.configPath = testPath;
+          foundConfig = true;
+          break;
+        }
+      }
+      
+      // Default to .js if no config found
+      if (!foundConfig) {
+        this.configPath = path.join(root, 'tinytailor.config.js');
+      }
     }
     
     const projectRoot = path.dirname(this.configPath);
@@ -180,10 +201,15 @@ export class ConfigManager {
           // Clear require cache for this config file
           delete require.cache[configPath];
           
-          const requiredConfig = require(configPath);
-          
-          // Handle both module.exports and export default
-          userConfig = requiredConfig.default || requiredConfig;
+          // For .mjs files, use dynamic import instead of require
+          if (this.configPath.endsWith('.mjs')) {
+            const importedConfig = await import(`file://${configPath}`);
+            userConfig = importedConfig.default || importedConfig;
+          } else {
+            const requiredConfig = require(configPath);
+            // Handle both module.exports and export default
+            userConfig = requiredConfig.default || requiredConfig;
+          }
         } catch (requireError: unknown) {
           // If require fails, try to load as JS file by reading and evaluating
           try {
@@ -291,15 +317,20 @@ export class ConfigManager {
       const userValue = userConfig[key as keyof PartialTinyTailorConfig];
       const defaultValue = defaultConfig[key as keyof TinyTailorConfig];
       
-      if (userValue !== null && typeof userValue === 'object' && !Array.isArray(userValue) && defaultValue && typeof defaultValue === 'object') {
-        // For nested objects, recursively merge
-        (result as Record<string, unknown>)[key] = {
-          ...(defaultValue as Record<string, unknown>),
-          ...(userValue as Record<string, unknown>)
-        };
-      } else if (userValue !== undefined) {
-        // For primitive values or arrays, use user value
-        (result as Record<string, unknown>)[key] = userValue as unknown;
+      if (userValue !== undefined) {
+        if (Array.isArray(userValue)) {
+          // For arrays, completely replace the default value
+          (result as Record<string, unknown>)[key] = userValue as unknown;
+        } else if (userValue !== null && typeof userValue === 'object' && defaultValue && typeof defaultValue === 'object') {
+          // For nested objects, recursively merge
+          (result as Record<string, unknown>)[key] = {
+            ...(defaultValue as Record<string, unknown>),
+            ...(userValue as Record<string, unknown>)
+          };
+        } else {
+          // For primitive values, use user value
+          (result as Record<string, unknown>)[key] = userValue as unknown;
+        }
       }
     }
     

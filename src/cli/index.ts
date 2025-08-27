@@ -129,6 +129,12 @@ program
       console.log(`  Public Root: ${chalk.cyan(config.publicRoot)}`);
       console.log(`  Current Working Directory: ${chalk.cyan(process.cwd())}`);
       
+      console.log(chalk.yellow('\nImage Optimization Settings:'));
+      console.log(`  Mobile Width 1x: ${chalk.cyan(config.imageOptimization.mobileWidth1x)}`);
+      console.log(`  Retina Multiplier: ${chalk.cyan(config.imageOptimization.retinaMultiplier)}`);
+      console.log(`  JPG Quality: ${chalk.cyan(config.imageOptimization.jpgQuality)}`);
+      console.log(`  WebP Quality: ${chalk.cyan(config.imageOptimization.webpQuality)}`);
+      
       console.log(chalk.yellow('\nScan Globs:'));
       config.scanGlobs.forEach(glob => {
         console.log(`  ${glob.startsWith('!') ? chalk.red(glob) : chalk.green(glob)}`);
