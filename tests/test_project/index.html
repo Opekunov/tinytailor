@@ -8,10 +8,15 @@
 </head>
 <body>
     <h1>Тестовая страница</h1>
-    <p>Это текст с&nbsp;предлогом в&nbsp;конце строки и</p>
-    <p>еще один абзац про&nbsp;площадь в&nbsp;м2 и&nbsp;объем в&nbsp;м3.</p>
+    <p>Это&nbsp;текст с&nbsp;предлогом в&nbsp;конце строки и</p>
+    <p>еще&nbsp;один абзац про&nbsp;площадь в&nbsp;м2 и&nbsp;объем в&nbsp;м3.</p>
     
-    <img src="images/test-image.jpg" alt="Test image" width="640" height="480">
+    <picture>
+        <source data-tinytailor="true" media="(max-width: 768px)" type="image/webp" srcset="./images/test-image-mob.webp 1x, ./images/test-image-mob@2x.webp 2x">
+        <source data-tinytailor="true" media="(max-width: 768px)" type="image/jpeg" srcset="./images/test-image-mob.jpg 1x, ./images/test-image-mob@2x.jpg 2x">
+        <source data-tinytailor="true" type="image/webp" srcset="./images/test-image.webp">
+        <img src="images/test-image.jpg" alt="Test image" width="640" height="480">
+    </picture>
     
     <div class="hero">
         <h2>Hero section</h2>

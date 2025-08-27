@@ -12,7 +12,7 @@ export async function runCommand(options: {
 }): Promise<void> {
   try {
     // Initialize config
-    const configManager = new ConfigManager(options.config ? require('path').dirname(options.config) : undefined);
+    const configManager = new ConfigManager(options.config);
     const config = await configManager.loadConfig();
     
     // Validate config
@@ -44,15 +44,30 @@ export async function runCommand(options: {
       // Determine which modules to run
       let selectedModules: ProcessingModule[];
       
-      if (options.skipMenu && options.modules) {
-        // Use modules from command line
-        selectedModules = options.modules.filter(m => 
-          ['image-optimization', 'text-processing', 'size-checking', 'css-optimization'].includes(m)
-        ) as ProcessingModule[];
-        
-        if (selectedModules.length === 0) {
-          menu.showError('No valid modules specified. Available: image-optimization, text-processing, size-checking, css-optimization');
-          process.exit(1);
+      if (options.skipMenu) {
+        // Skip menu - use provided modules or fall back to defaults
+        if (options.modules && options.modules.length > 0) {
+          selectedModules = options.modules.filter(m => 
+            ['image-optimization', 'text-processing', 'size-checking', 'css-optimization'].includes(m)
+          ) as ProcessingModule[];
+          
+          if (selectedModules.length === 0) {
+            menu.showError('No valid modules specified. Available: image-optimization, text-processing, size-checking, css-optimization');
+            process.exit(1);
+          }
+        } else {
+          // No modules specified, use all enabled modules from config
+          selectedModules = [];
+          if (config.imageOptimization.enabled) selectedModules.push('image-optimization');
+          if (config.textProcessing.hangingPrepositions.enabled || config.textProcessing.superscriptReplacements.enabled) {
+            selectedModules.push('text-processing');
+          }
+          if (config.cssOptimization.enabled) selectedModules.push('css-optimization');
+          
+          if (selectedModules.length === 0) {
+            menu.showError('No modules enabled in configuration.');
+            process.exit(1);
+          }
         }
       } else {
         // Show interactive menu

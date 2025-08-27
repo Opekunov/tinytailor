@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import * as fsSync from 'fs';
 import { TinyTailorConfig, VMSandbox, PartialTinyTailorConfig } from '../types';
 
 const DEFAULT_CONFIG: TinyTailorConfig = {
@@ -143,13 +144,27 @@ export class ConfigManager {
   private config: TinyTailorConfig;
   private configPath: string;
 
-  constructor(projectRoot?: string) {
-    const root = projectRoot || process.cwd();
-    this.configPath = path.join(root, 'tinytailor.config.js');
+  constructor(configPath?: string) {
+    if (configPath) {
+      // Check if it's a directory or file path
+      if (fsSync.existsSync(configPath) && fsSync.statSync(configPath).isDirectory()) {
+        // Legacy behavior: directory provided, look for config file in it
+        this.configPath = path.join(configPath, 'tinytailor.config.js');
+      } else {
+        // New behavior: explicit config file path provided
+        this.configPath = path.resolve(configPath);
+      }
+    } else {
+      // Otherwise, look for default config in current directory
+      const root = process.cwd();
+      this.configPath = path.join(root, 'tinytailor.config.js');
+    }
+    
+    const projectRoot = path.dirname(this.configPath);
     this.config = {
       ...DEFAULT_CONFIG,
-      projectRoot: root,
-      publicRoot: path.join(root, 'public'),
+      projectRoot,
+      publicRoot: path.join(projectRoot, 'public'),
     };
   }
 
@@ -161,7 +176,10 @@ export class ConfigManager {
         try {
           // Try require first - most compatible for CommonJS
           const configPath = path.resolve(this.configPath);
+          
+          // Clear require cache for this config file
           delete require.cache[configPath];
+          
           const requiredConfig = require(configPath);
           
           // Handle both module.exports and export default

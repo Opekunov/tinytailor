@@ -56,19 +56,40 @@ export class TextProcessor {
   }
 
   private shouldProcessFile(filePath: string): boolean {
-    const extension = FileUtils.getExtension(filePath);
+    const extension = FileUtils.getExtension(filePath); // e.g. ".php"
+    const fileName = FileUtils.getBasename(filePath);  // e.g. "test.blade.php"
     
     // Check hanging prepositions extensions
     if (this.config.textProcessing.hangingPrepositions.enabled) {
-      if (this.config.textProcessing.hangingPrepositions.fileExtensions.includes(extension)) {
+      const extensions = this.config.textProcessing.hangingPrepositions.fileExtensions;
+      
+      // Check for exact extension match
+      if (extensions.includes(extension)) {
         return true;
+      }
+      
+      // Check for compound extensions like .blade.php
+      for (const ext of extensions) {
+        if (ext.includes('.') && fileName.endsWith(ext.substring(1))) { // Remove leading dot
+          return true;
+        }
       }
     }
 
     // Check superscript replacements (use same extensions as hanging prepositions for now)
     if (this.config.textProcessing.superscriptReplacements.enabled) {
-      if (this.config.textProcessing.hangingPrepositions.fileExtensions.includes(extension)) {
+      const extensions = this.config.textProcessing.hangingPrepositions.fileExtensions;
+      
+      // Check for exact extension match
+      if (extensions.includes(extension)) {
         return true;
+      }
+      
+      // Check for compound extensions like .blade.php
+      for (const ext of extensions) {
+        if (ext.includes('.') && fileName.endsWith(ext.substring(1))) { // Remove leading dot
+          return true;
+        }
       }
     }
 

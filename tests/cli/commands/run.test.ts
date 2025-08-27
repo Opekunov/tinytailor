@@ -122,7 +122,7 @@ describe('Run Command', () => {
         modules: ['image-optimization'] 
       });
 
-      expect(MockedConfigManager).toHaveBeenCalledWith(tempDir);
+      expect(MockedConfigManager).toHaveBeenCalledWith(customConfigPath);
     });
   });
 

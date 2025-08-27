@@ -3,6 +3,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+imgx/
+public/
 
 # Build output
 dist/
@@ -56,3 +58,6 @@ CLAUDE.md
 # Generated config templates (auto-generated from .ts)
 /templates/tinytailor.config.js
 /templates/tinytailor.config.mjs
+debug.js
+/tests/test_project
+/tests/test_project

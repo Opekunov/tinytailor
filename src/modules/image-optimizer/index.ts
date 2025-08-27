@@ -35,25 +35,39 @@ export class ImageOptimizer {
   }
 
   private async processGenericRegion(fileAbs: string, region: string): Promise<{ changed: boolean; output: string }> {
-    const blocks = this.findPictureBlocks(region);
-    if (!blocks.length) return { changed: false, output: region };
-
-    let offset = 0;
-    let out = region;
+    // First, process existing <picture> blocks
+    const pictureBlocks = this.findPictureBlocks(region);
+    let output = region;
     let anyChanged = false;
+    let offset = 0;
 
-    for (const block of blocks) {
+    for (const block of pictureBlocks) {
       const updated = await this.processPictureFragment(fileAbs, block.openTag, block.inner, block.closeTag, block.indent);
       if (!updated) continue;
       
       const start = block.start + offset;
       const end = block.end + offset;
-      out = out.slice(0, start) + updated + out.slice(end);
+      output = output.slice(0, start) + updated + output.slice(end);
       offset += updated.length - (end - start);
       anyChanged = true;
     }
+
+    // Then, find standalone <img> tags and convert them to <picture>
+    const standaloneImgs = this.findStandaloneImages(output);
+    offset = 0;
+
+    for (const imgBlock of standaloneImgs) {
+      const pictureElement = await this.convertImgToPicture(fileAbs, imgBlock.imgTag, imgBlock.indent);
+      if (!pictureElement) continue;
+
+      const start = imgBlock.start + offset;
+      const end = imgBlock.end + offset;
+      output = output.slice(0, start) + pictureElement + output.slice(end);
+      offset += pictureElement.length - (end - start);
+      anyChanged = true;
+    }
     
-    return { changed: anyChanged, output: out };
+    return { changed: anyChanged, output };
   }
 
   private findPictureBlocks(source: string) {
@@ -294,5 +308,181 @@ export class ImageOptimizer {
     }
     
     return normalizedSrc;
+  }
+
+  private findStandaloneImages(source: string) {
+    const blocks = [];
+    // Find <img> tags that are NOT inside <picture> elements
+    const imgRe = /<img\b[^>]*>/gi;
+    let match;
+    
+    while ((match = imgRe.exec(source))) {
+      const imgTag = match[0];
+      const start = match.index;
+      const end = match.index + imgTag.length;
+      
+      // Check if this <img> is inside a <picture> element
+      const beforeImg = source.slice(0, start);
+      const afterImg = source.slice(end);
+      
+      // Count opening and closing <picture> tags before this <img>
+      const openPictureBefore = (beforeImg.match(/<picture\b[^>]*>/gi) || []).length;
+      const closePictureBefore = (beforeImg.match(/<\/picture\s*>/gi) || []).length;
+      
+      // If we're not inside a <picture>, this is a standalone <img>
+      if (openPictureBefore === closePictureBefore) {
+        const indentMatch = source.slice(source.lastIndexOf('\n', start) + 1, start).match(/^\s*/);
+        const indent = indentMatch ? indentMatch[0] : '';
+        
+        blocks.push({
+          start,
+          end,
+          imgTag,
+          indent,
+        });
+      }
+    }
+    
+    return blocks;
+  }
+
+  private async convertImgToPicture(fileAbs: string, imgTag: string, indent: string): Promise<string | null> {
+    // Parse the img tag to extract src and other attributes
+    // Handle both regular quotes and Laravel blade syntax
+    let rawSrc: string | null = null;
+    
+    // Try double quotes first
+    let srcMatch = imgTag.match(/src\s*=\s*"([^"]*)"/i);
+    if (srcMatch) {
+      rawSrc = srcMatch[1];
+    } else {
+      // Try single quotes
+      srcMatch = imgTag.match(/src\s*=\s*'([^']*)'/i);
+      if (srcMatch) {
+        rawSrc = srcMatch[1];
+      }
+    }
+    
+    if (!rawSrc) {
+      return null;
+    }
+    
+    const src = FileUtils.extractSrc(rawSrc);
+    const imgAbs = await this.pathResolver.resolveImagePath(fileAbs, src || '');
+    
+    if (!imgAbs || !FileUtils.isRasterImage(imgAbs, this.config.imageOptimization.rasterExts)) {
+      return null;
+    }
+
+    // Create backup if we're going to modify the image
+    await FileUtils.backupFile(imgAbs);
+
+    // Determine the original src format (asset() or regular path)
+    const usesAsset = rawSrc.includes('asset(');
+
+    // PNG recompression first
+    if (this.config.imageOptimization.pngRecompress.enabled) {
+      try {
+        const result = await this.sharpProcessor.recompressPng(imgAbs, {
+          sizeThreshold: this.config.imageOptimization.pngRecompress.sizeThresholdBytes,
+          pixelsThreshold: this.config.imageOptimization.pngRecompress.minPixelsThreshold,
+          compressionLevel: this.config.imageOptimization.pngRecompress.compressionLevel,
+          effort: this.config.imageOptimization.pngRecompress.effort,
+          adaptiveFiltering: this.config.imageOptimization.pngRecompress.adaptiveFiltering,
+        });
+
+        if (result.compressed && this.config.imageOptimization.pngRecompress.log) {
+          this.logger.logImageProcessing(imgAbs, 'PNG Recompressed', result.originalSize, result.newSize);
+        }
+      } catch (error: unknown) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`PNG recompress failed for ${path.relative(this.config.projectRoot, imgAbs)}: ${errorMsg}`);
+      }
+    }
+
+    const { width: origWidth } = await this.sharpProcessor.getMetadata(imgAbs);
+    const derivatives = this.pathResolver.buildDerivatives(imgAbs);
+
+    const needDownscale = origWidth > this.config.imageOptimization.onlyDownscaleIfWiderThan;
+    
+    // Generate mobile versions
+    if (needDownscale) {
+      const mob1xResult = await this.sharpProcessor.downscale(
+        imgAbs,
+        derivatives.mob1x,
+        this.config.imageOptimization.mobileWidth1x,
+        { jpg: this.config.imageOptimization.jpgQuality }
+      );
+      if (mob1xResult.created) {
+        this.logger.logImageProcessing(derivatives.mob1x, 'Mobile 1x', mob1xResult.originalSize, mob1xResult.newSize);
+      }
+
+      const mob2xResult = await this.sharpProcessor.downscale(
+        imgAbs,
+        derivatives.mob2x,
+        this.config.imageOptimization.mobileWidth1x * this.config.imageOptimization.retinaMultiplier,
+        { jpg: this.config.imageOptimization.jpgQuality }
+      );
+      if (mob2xResult.created) {
+        this.logger.logImageProcessing(derivatives.mob2x, 'Mobile 2x', mob2xResult.originalSize, mob2xResult.newSize);
+      }
+
+      // WebP versions of mobile
+      const mob1xWebpResult = await this.sharpProcessor.convertToWebp(
+        derivatives.mob1x,
+        derivatives.mob1xWebp,
+        this.config.imageOptimization.webpQuality
+      );
+      if (mob1xWebpResult.created) {
+        this.logger.logImageProcessing(derivatives.mob1xWebp, 'Mobile WebP 1x', mob1xWebpResult.originalSize, mob1xWebpResult.newSize);
+      }
+
+      const mob2xWebpResult = await this.sharpProcessor.convertToWebp(
+        derivatives.mob2x,
+        derivatives.mob2xWebp,
+        this.config.imageOptimization.webpQuality
+      );
+      if (mob2xWebpResult.created) {
+        this.logger.logImageProcessing(derivatives.mob2xWebp, 'Mobile WebP 2x', mob2xWebpResult.originalSize, mob2xWebpResult.newSize);
+      }
+    }
+
+    // Desktop WebP
+    const webpResult = await this.sharpProcessor.convertToWebp(
+      imgAbs,
+      derivatives.webp,
+      this.config.imageOptimization.webpQuality
+    );
+    if (webpResult.created) {
+      this.logger.logImageProcessing(derivatives.webp, 'Desktop WebP', webpResult.originalSize, webpResult.newSize);
+    }
+
+    // Build source elements for the new <picture>
+    const sources = [];
+
+    // Mobile WebP sources
+    if (needDownscale) {
+      sources.push(
+        `<source ${this.config.imageOptimization.markerAttr}="true" media="${this.config.imageOptimization.mobileMedia}" type="image/webp" srcset="${this.formatSrcForHtml(fileAbs, derivatives.mob1xWebp, usesAsset)} 1x, ${this.formatSrcForHtml(fileAbs, derivatives.mob2xWebp, usesAsset)} 2x">`
+      );
+
+      // Mobile original format sources
+      const origMime = mime.lookup(derivatives.ext) || '';
+      sources.push(
+        `<source ${this.config.imageOptimization.markerAttr}="true" media="${this.config.imageOptimization.mobileMedia}" type="${origMime}" srcset="${this.formatSrcForHtml(fileAbs, derivatives.mob1x, usesAsset)} 1x, ${this.formatSrcForHtml(fileAbs, derivatives.mob2x, usesAsset)} 2x">`
+      );
+    }
+
+    // Desktop WebP source
+    sources.push(
+      `<source ${this.config.imageOptimization.markerAttr}="true" type="image/webp" srcset="${this.formatSrcForHtml(fileAbs, derivatives.webp, usesAsset)}">`
+    );
+
+    // Build the complete <picture> element
+    const contentIndent = `${indent}    `;
+    const sourcesBlock = sources.map(s => `${contentIndent}${s}`).join('\n');
+    const normalizedImg = `${contentIndent}${imgTag}`;
+
+    return `<picture>\n${sourcesBlock}\n${normalizedImg}\n${indent}</picture>`;
   }
 }
